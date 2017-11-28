@@ -19,11 +19,10 @@ PASSWORD = 'admin'
 class AlfApiTestCase(unittest.TestCase):
 
     def setUp(self):
-        pass
+        self.client = AlfApiClient(HOSTNAME, USERNAME, PASSWORD)
 
     def test_get_sites(self):
-        client = AlfApiClient(HOSTNAME, USERNAME, PASSWORD)
-        sites = client.get_sites()
+        sites = self.client.get_sites()
         self.assertIsInstance(sites, list)
         for site in sites:
             self.assertTrue('entry' in site)
@@ -35,8 +34,7 @@ class AlfApiTestCase(unittest.TestCase):
             self.assertTrue('title' in site['entry'])
 
     def test_get_site(self):
-        client = AlfApiClient(HOSTNAME, USERNAME, PASSWORD)
-        site = client.get_site('swsdp')
+        site = self.client.get_site('swsdp')
         self.assertIsInstance(site, dict)
         self.assertTrue('role' in site)
         self.assertTrue('visibility' in site)
@@ -46,9 +44,8 @@ class AlfApiTestCase(unittest.TestCase):
         self.assertTrue('title' in site)
 
     def test_add_site(self):
-        client = AlfApiClient(HOSTNAME, USERNAME, PASSWORD)
-        site_id = 'test-site-12'
-        response = client.add_site(
+        site_id = input('Enter a site_id: ')
+        response = self.client.add_site(
             site_id=site_id,
             title='Test Site 1',
             description='This is test site #1.',
@@ -56,7 +53,7 @@ class AlfApiTestCase(unittest.TestCase):
         )
         print(response)
         self.assertTrue(response)
-        response = client.delete_site(site_id)
+        response = self.client.delete_site(site_id)
         print(response)
 
 

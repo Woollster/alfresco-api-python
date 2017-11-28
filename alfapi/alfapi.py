@@ -24,6 +24,13 @@ URI = 'alfresco/api/-default-/public/alfresco/versions/1'
 
 class AlfApiClient(object):
     """ API Client """
+
+    def _get_url(self, uri):
+        return '{url}/{uri}'.format(
+            url=self.url,
+            uri=uri,
+        )
+
     def __init__(self, host_url, username, password):
         self.url = '{host_url}/{uri}'.format(
             host_url=host_url,
@@ -34,10 +41,7 @@ class AlfApiClient(object):
 
     def get_sites(self):
         uri = 'sites'
-        url = '{url}/{uri}'.format(
-            url=self.url,
-            uri=uri,
-        )
+        url = self._get_url(uri)
         response = requests.get(
             url, auth=(
                 self.username, self.password
@@ -52,10 +56,7 @@ class AlfApiClient(object):
         """ Not supported for Alfresco 5.1.x and older. """
 
         uri = 'sites'
-        url = '{url}/{uri}'.format(
-            url=self.url,
-            uri=uri,
-        )
+        url = self._get_url(uri)
 
         payload = {}
         payload['id'] = site_id
@@ -75,10 +76,7 @@ class AlfApiClient(object):
 
     def get_site(self, site_id):
         uri = 'sites/{site_id}'.format(site_id=site_id)
-        url = '{url}/{uri}'.format(
-            url=self.url,
-            uri=uri,
-        )
+        url = self._get_url(uri)
         response = requests.get(
             url, auth=(
                 self.username, self.password
@@ -89,11 +87,8 @@ class AlfApiClient(object):
 
     def delete_site(self, site_id):
         uri = 'sites/{site_id}'.format(site_id=site_id)
-        url = '{url}/{uri}'.format(
-            url=self.url,
-            uri=uri,
-        )
-        print(url)
+        url = self._get_url(uri)
+        print('Deleting site: {}'.format(url))
         response = requests.delete(
             url,
             auth=(
