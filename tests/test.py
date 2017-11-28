@@ -45,6 +45,20 @@ class AlfApiTestCase(unittest.TestCase):
         self.assertTrue('id' in site)
         self.assertTrue('title' in site)
 
+    def test_add_site(self):
+        client = AlfApiClient(HOSTNAME, USERNAME, PASSWORD)
+        site_id = 'test-site-12'
+        response = client.add_site(
+            site_id=site_id,
+            title='Test Site 1',
+            description='This is test site #1.',
+            role='SiteManager'
+        )
+        print(response)
+        self.assertTrue(response)
+        response = client.delete_site(site_id)
+        print(response)
+
 
 if __name__ == '__main__':
     unittest.main()

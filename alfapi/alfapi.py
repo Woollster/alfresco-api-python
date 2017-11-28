@@ -30,7 +30,7 @@ class AlfApiClient(object):
             uri=URI
         )
         self.username = username
-        self.pasword = password
+        self.password = password
 
     def get_sites(self):
         uri = 'sites'
@@ -40,11 +40,38 @@ class AlfApiClient(object):
         )
         response = requests.get(
             url, auth=(
-                self.username, self.pasword
+                self.username, self.password
             )
         )
         json_data = json.loads(response.content)
         return json_data['list']['entries']
+
+    def add_site(
+            self, site_id, title, visibility='PUBLIC',
+            description=None, role='SiteConsumer'):
+        """ Not supported for Alfresco 5.1.x and older. """
+
+        uri = 'sites'
+        url = '{url}/{uri}'.format(
+            url=self.url,
+            uri=uri,
+        )
+
+        payload = {}
+        payload['id'] = site_id
+        payload['title'] = title
+        payload['visibility'] = visibility
+        payload['description'] = description
+        payload['role'] = role
+
+        response = requests.post(
+            url, auth=(
+                self.username, self.password
+            ),
+            data=json.dumps(payload),
+        )
+        json_data = json.loads(response.content)
+        return json_data
 
     def get_site(self, site_id):
         uri = 'sites/{site_id}'.format(site_id=site_id)
@@ -54,8 +81,24 @@ class AlfApiClient(object):
         )
         response = requests.get(
             url, auth=(
-                self.username, self.pasword
+                self.username, self.password
             )
         )
         json_data = json.loads(response.content)
         return json_data['entry']
+
+    def delete_site(self, site_id):
+        uri = 'sites/{site_id}'.format(site_id=site_id)
+        url = '{url}/{uri}'.format(
+            url=self.url,
+            uri=uri,
+        )
+        print(url)
+        response = requests.delete(
+            url,
+            auth=(
+                self.username,
+                self.password
+            ),
+        )
+        return response
