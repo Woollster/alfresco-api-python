@@ -137,5 +137,4 @@ class AlfApiClient(object):
             ),
             data=json.dumps(payload),
         )
-        json_data = json.loads(response.content)
-        return json_data
+        return response

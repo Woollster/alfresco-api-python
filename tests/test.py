@@ -91,7 +91,24 @@ class PeopleTestCase(unittest.TestCase):
             email='testuser1@localhost',
             password='admin',
         )
-        print(response)
+        self.assertTrue(
+            response.status_code == 201 or
+            response.status_code == 409
+        )
+        print(response.status_code)
+
+        response = self.client.add_person(
+            user_id='testuser2',
+            first_name='Test',
+            last_name='User2',
+            email='testuser2@localhost',
+            password='admin',
+        )
+        self.assertTrue(
+            response.status_code == 201 or
+            response.status_code == 409
+        )
+        print(response.status_code)
 
 
 if __name__ == '__main__':
