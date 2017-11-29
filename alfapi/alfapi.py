@@ -97,3 +97,45 @@ class AlfApiClient(object):
             ),
         )
         return response
+
+    def update_site(self, site_id, **kwargs):
+        uri = 'sites'
+        url = self._get_url(uri)
+
+        payload = {}
+        for item in kwargs:
+            payload[item] = kwargs[item]
+
+        response = requests.put(
+            url, auth=(
+                self.username, self.password
+            ),
+            data=json.dumps(payload),
+        )
+        json_data = json.loads(response.content)
+        return json_data
+
+    def add_person(self, user_id, email, **kwargs):
+        uri = 'people'
+        url = self._get_url(uri)
+
+        payload = {}
+        payload['id'] = user_id
+        payload['email'] = email
+        payload['password'] = kwargs['password']
+
+        if 'first_name' in kwargs:
+            payload['firstName'] = kwargs['first_name']
+        if 'last_name' in kwargs:
+            payload['lastName'] = kwargs['last_name']
+        if 'properties' in kwargs:
+            payload['properties'] = kwargs['properties']
+
+        response = requests.post(
+            url, auth=(
+                self.username, self.password
+            ),
+            data=json.dumps(payload),
+        )
+        json_data = json.loads(response.content)
+        return json_data

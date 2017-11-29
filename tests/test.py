@@ -1,11 +1,11 @@
 #!/usr/bin/env python
 
-import json
 import sys
 import unittest
+from unittest import TestSuite, TestLoader
 
-from requests.models import Response
 
+sys.path.append('.')
 sys.path.append('../')
 
 from alfapi.alfapi import AlfApiClient
@@ -16,7 +16,7 @@ USERNAME = 'admin'
 PASSWORD = 'admin'
 
 
-class AlfApiTestCase(unittest.TestCase):
+class AlfApiSiteTestCase(unittest.TestCase):
 
     def setUp(self):
         self.client = AlfApiClient(HOSTNAME, USERNAME, PASSWORD)
@@ -47,8 +47,8 @@ class AlfApiTestCase(unittest.TestCase):
         site_id = input('Enter a site_id: ')
         response = self.client.add_site(
             site_id=site_id,
-            title='Test Site 1',
-            description='This is test site #1.',
+            title='Test Site',
+            description='This is a test site.',
             role='SiteManager'
         )
         print(response)
@@ -56,6 +56,49 @@ class AlfApiTestCase(unittest.TestCase):
         response = self.client.delete_site(site_id)
         print(response)
 
+    def test_update_site(self):
+        site_id = input('Enter a site_id: ')
+        response = self.client.add_site(
+            site_id=site_id,
+            title='Test Site',
+            description='This is a test site.',
+            role='SiteManager'
+        )
+        print(response)
+        self.assertTrue(response)
+
+        response = self.client.update_site(
+            site_id=site_id,
+            title='Updated Test Site',
+            description='This is an updated test site',
+            role='SiteConsumer',
+            visibility='MODERATED',
+        )
+        print(response)
+        response = self.client.delete_site(site_id)
+        print(response)
+
+
+class PeopleTestCase(unittest.TestCase):
+    def setUp(self):
+        self.client = AlfApiClient(HOSTNAME, USERNAME, PASSWORD)
+
+    def test_add_person(self):
+        response = self.client.add_person(
+            user_id='testuser1',
+            first_name='Test',
+            last_name='User1',
+            email='testuser1@localhost',
+            password='admin',
+        )
+        print(response)
+
 
 if __name__ == '__main__':
-    unittest.main()
+    # unittest.main()
+    tts = TestSuite()
+
+    # tts.addTests(TestLoader().loadTestsFromTestCase(AlfApiSiteTestCase))
+    tts.addTests(TestLoader().loadTestsFromTestCase(PeopleTestCase))
+
+    unittest.TextTestRunner(failfast=True).run(tts)
