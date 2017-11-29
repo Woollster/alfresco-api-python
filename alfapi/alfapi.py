@@ -138,3 +138,15 @@ class AlfApiClient(object):
             data=json.dumps(payload),
         )
         return response
+
+    def get_people(self):
+        uri = 'people'
+        url = self._get_url(uri)
+
+        response = requests.get(
+            url, auth=(
+                self.username, self.password
+            ),
+        )
+        json_data = json.loads(response.content)
+        return json_data['list']['entries']

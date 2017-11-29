@@ -110,6 +110,10 @@ class PeopleTestCase(unittest.TestCase):
         )
         print(response.status_code)
 
+        people = self.client.get_people()
+        for person in people:
+            self.assertTrue('id' in person['entry'])
+
 
 if __name__ == '__main__':
     # unittest.main()
