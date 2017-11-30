@@ -8,7 +8,7 @@ import sys
 import requests
 
 logger = logging.getLogger('tests.alfapi')
-logger.setLevel(logging.WARN)
+logger.setLevel(logging.INFO)
 log_format = logging.Formatter(
     '%(asctime)s  [%(levelname)s]  '
     '[%(module)s.%(name)s.%(funcName)s]:%(lineno)s'
@@ -20,6 +20,10 @@ logger.addHandler(console_handler)
 
 
 URI = 'alfresco/api/-default-/public/alfresco/versions/1'
+
+
+class Person(object):
+    pass
 
 
 class AlfApiClient(object):
@@ -39,114 +43,44 @@ class AlfApiClient(object):
         self.username = username
         self.password = password
 
-    def get_sites(self):
-        uri = 'sites'
-        url = self._get_url(uri)
-        response = requests.get(
-            url, auth=(
-                self.username, self.password
-            )
-        )
-        json_data = json.loads(response.content)
-        return json_data['list']['entries']
-
-    def add_site(
-            self, site_id, title, visibility='PUBLIC',
-            description=None, role='SiteConsumer'):
-        """ Not supported for Alfresco 5.1.x and older. """
-
-        uri = 'sites'
-        url = self._get_url(uri)
-
-        payload = {}
-        payload['id'] = site_id
-        payload['title'] = title
-        payload['visibility'] = visibility
-        payload['description'] = description
-        payload['role'] = role
-
-        response = requests.post(
-            url, auth=(
-                self.username, self.password
-            ),
-            data=json.dumps(payload),
-        )
-        json_data = json.loads(response.content)
-        return json_data
-
-    def get_site(self, site_id):
-        uri = 'sites/{site_id}'.format(site_id=site_id)
-        url = self._get_url(uri)
-        response = requests.get(
-            url, auth=(
-                self.username, self.password
-            )
-        )
-        json_data = json.loads(response.content)
-        return json_data['entry']
-
-    def delete_site(self, site_id):
-        uri = 'sites/{site_id}'.format(site_id=site_id)
-        url = self._get_url(uri)
-        print('Deleting site: {}'.format(url))
-        response = requests.delete(
-            url,
-            auth=(
-                self.username,
-                self.password
-            ),
-        )
-        return response
-
-    def update_site(self, site_id, **kwargs):
-        uri = 'sites'
-        url = self._get_url(uri)
-
-        payload = {}
-        for item in kwargs:
-            payload[item] = kwargs[item]
-
-        response = requests.put(
-            url, auth=(
-                self.username, self.password
-            ),
-            data=json.dumps(payload),
-        )
-        json_data = json.loads(response.content)
-        return json_data
-
-    def add_person(self, user_id, email, **kwargs):
-        uri = 'people'
-        url = self._get_url(uri)
-
-        payload = {}
-        payload['id'] = user_id
-        payload['email'] = email
-        payload['password'] = kwargs['password']
-
-        if 'first_name' in kwargs:
-            payload['firstName'] = kwargs['first_name']
-        if 'last_name' in kwargs:
-            payload['lastName'] = kwargs['last_name']
-        if 'properties' in kwargs:
-            payload['properties'] = kwargs['properties']
-
-        response = requests.post(
-            url, auth=(
-                self.username, self.password
-            ),
-            data=json.dumps(payload),
-        )
-        return response
-
-    def get_people(self):
-        uri = 'people'
-        url = self._get_url(uri)
-
-        response = requests.get(
-            url, auth=(
-                self.username, self.password
-            ),
-        )
-        json_data = json.loads(response.content)
-        return json_data['list']['entries']
+    def people(self, method='GET', instance=None):
+        """ People are users in an Alfresco system.
+        Options for modes are:
+        POST, GET, PUT, DELETE
+        """
+        if method == 'GET':
+            if not instance:
+                base_uri = 'people'
+                response = requests.get(
+                    self._get_url(base_uri),
+                    auth=(
+                        self.username, self.password
+                    )
+                )
+                logger.debug(response)
+                raw_data = [
+                    entry['entry'] for entry in json.loads(
+                        response.content
+                    )['list']['entries']
+                ]
+                people = []
+                person = Person()
+                for person_dict in raw_data:
+                    for k, v in person_dict.items():
+                        setattr(person, k, v)
+                    people.append(person)
+                return people
+            else:
+                base_uri = '/'.join(['people', instance])
+                response = requests.get(
+                    self._get_url(base_uri),
+                    auth=(
+                        self.username, self.password
+                    )
+                )
+                logger.debug(response)
+                raw_data = json.loads(response.content)['entry']
+                person = Person()
+                for k, v in raw_data.items():
+                    setattr(person, k, v)
+                return person

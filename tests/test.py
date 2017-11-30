@@ -21,98 +21,49 @@ class AlfApiSiteTestCase(unittest.TestCase):
     def setUp(self):
         self.client = AlfApiClient(HOSTNAME, USERNAME, PASSWORD)
 
-    def test_get_sites(self):
-        sites = self.client.get_sites()
-        self.assertIsInstance(sites, list)
-        for site in sites:
-            self.assertTrue('entry' in site)
-            self.assertTrue('role' in site['entry'])
-            self.assertTrue('visibility' in site['entry'])
-            self.assertTrue('guid' in site['entry'])
-            self.assertTrue('description' in site['entry'])
-            self.assertTrue('id' in site['entry'])
-            self.assertTrue('title' in site['entry'])
-
-    def test_get_site(self):
-        site = self.client.get_site('swsdp')
-        self.assertIsInstance(site, dict)
-        self.assertTrue('role' in site)
-        self.assertTrue('visibility' in site)
-        self.assertTrue('guid' in site)
-        self.assertTrue('description' in site)
-        self.assertTrue('id' in site)
-        self.assertTrue('title' in site)
-
-    def test_add_site(self):
-        site_id = input('Enter a site_id: ')
-        response = self.client.add_site(
-            site_id=site_id,
-            title='Test Site',
-            description='This is a test site.',
-            role='SiteManager'
-        )
-        print(response)
-        self.assertTrue(response)
-        response = self.client.delete_site(site_id)
-        print(response)
-
-    def test_update_site(self):
-        site_id = input('Enter a site_id: ')
-        response = self.client.add_site(
-            site_id=site_id,
-            title='Test Site',
-            description='This is a test site.',
-            role='SiteManager'
-        )
-        print(response)
-        self.assertTrue(response)
-
-        response = self.client.update_site(
-            site_id=site_id,
-            title='Updated Test Site',
-            description='This is an updated test site',
-            role='SiteConsumer',
-            visibility='MODERATED',
-        )
-        print(response)
-        response = self.client.delete_site(site_id)
-        print(response)
-
 
 class PeopleTestCase(unittest.TestCase):
     def setUp(self):
         self.client = AlfApiClient(HOSTNAME, USERNAME, PASSWORD)
 
-    def test_add_person(self):
-        response = self.client.add_person(
-            user_id='testuser1',
-            first_name='Test',
-            last_name='User1',
-            email='testuser1@localhost',
-            password='admin',
-        )
-        self.assertTrue(
-            response.status_code == 201 or
-            response.status_code == 409
-        )
-        print(response.status_code)
+    def test_people_get(self):
+        entries = self.client.people('GET')
+        for person in entries:
+            self.assertTrue(hasattr(person, 'avatarId'))
+            self.assertTrue(hasattr(person, 'company'))
+            self.assertTrue(hasattr(person, 'description'))
+            self.assertTrue(hasattr(person, 'email'))
+            self.assertTrue(hasattr(person, 'emailNotificationsEnabled'))
+            self.assertTrue(hasattr(person, 'enabled'))
+            self.assertTrue(hasattr(person, 'firstName'))
+            self.assertTrue(hasattr(person, 'id'))
+            self.assertTrue(hasattr(person, 'jobTitle'))
+            self.assertTrue(hasattr(person, 'lastName'))
+            self.assertTrue(hasattr(person, 'location'))
+            self.assertTrue(hasattr(person, 'mobile'))
+            self.assertTrue(hasattr(person, 'skypeId'))
+            self.assertTrue(hasattr(person, 'statusUpdatedAt'))
+            self.assertTrue(hasattr(person, 'telephone'))
+            self.assertTrue(hasattr(person, 'userStatus'))
 
-        response = self.client.add_person(
-            user_id='testuser2',
-            first_name='Test',
-            last_name='User2',
-            email='testuser2@localhost',
-            password='admin',
-        )
-        self.assertTrue(
-            response.status_code == 201 or
-            response.status_code == 409
-        )
-        print(response.status_code)
-
-        people = self.client.get_people()
-        for person in people:
-            self.assertTrue('id' in person['entry'])
+    def test_person_get(self):
+        person = self.client.people('GET', 'admin')
+        # self.assertTrue(hasattr(person, 'avatarId'))
+        # self.assertTrue(hasattr(person, 'company'))
+        # self.assertTrue(hasattr(person, 'description'))
+        self.assertTrue(hasattr(person, 'email'))
+        self.assertTrue(hasattr(person, 'emailNotificationsEnabled'))
+        self.assertTrue(hasattr(person, 'enabled'))
+        # self.assertTrue(hasattr(person, 'firstName'))
+        self.assertTrue(hasattr(person, 'id'))
+        # self.assertTrue(hasattr(person, 'jobTitle'))
+        # self.assertTrue(hasattr(person, 'lastName'))
+        # self.assertTrue(hasattr(person, 'location'))
+        # self.assertTrue(hasattr(person, 'mobile'))
+        # self.assertTrue(hasattr(person, 'skypeId'))
+        # self.assertTrue(hasattr(person, 'statusUpdatedAt'))
+        # self.assertTrue(hasattr(person, 'telephone'))
+        # self.assertTrue(hasattr(person, 'userStatus'))
 
 
 if __name__ == '__main__':
