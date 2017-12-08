@@ -62,3 +62,6 @@ if __name__ == '__main__':
             )
     print('\n')
     #"""
+
+    response = repo.people.delete(username)
+    print(response)
