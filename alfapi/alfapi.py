@@ -22,147 +22,6 @@ logger.addHandler(console_handler)
 
 URI = 'alfresco/api/-default-/public/alfresco/versions/1'
 
-
-def _get_url(url, base_path):
-        return '{url}/{base_path}'.format(
-            url=url,
-            base_path=base_path,
-        )
-
-
-people_attributes = (
-    'lastName', 'userStatus', 'jobTitle', 'statusUpdatedAt',
-    'mobile', 'emailNotificationEnabled', 'description',
-    'telephone', 'enabled', 'firstName', 'skypeId',
-    'avatarId', 'location', 'company', 'id', 'email',
-)
-
-
-class Model(object):
-    def __iter__(self):
-        for attr, value in self.__dict__.iteritems():
-            yield attr, value
-
-
-class People(Model):
-    base_path = 'people'
-
-    def __init__(self, repo):
-        self.repo = repo
-
-    def add(self, **kwargs):
-        url = _get_url(self.repo.url, self.base_path)
-        response = requests.post(
-            url,
-            auth=(
-                self.repo.username,
-                self.repo.password
-            ),
-            data=json.dumps(
-                kwargs
-            )
-        )
-
-        if response.status_code == 200:
-            entry = json.loads(response.content)['entry']
-            p = Model()
-
-            for k, v in entry.items():
-                setattr(p, k, v)
-            for attr in people_attributes:
-                if not hasattr(p, attr):
-                    if k is not 'company':
-                        setattr(p, attr, None)
-                    else:
-                        setattr(p, attr, {})
-            return p
-        else:
-            logger.warn(response.status_code)
-            logger.warn(response.content)
-
-    def all(self):
-        url = _get_url(self.repo.url, self.base_path)
-        response = requests.get(
-            url,
-            auth=(
-                self.repo.username,
-                self.repo.password
-            )
-        )
-        entry_list = [
-            entry['entry'] for entry in json.loads(
-                response.content
-            )
-            ['list']
-            ['entries']
-        ]
-
-        p_list = []
-        for entry in entry_list:
-            p = Model()
-            for k, v in entry.items():
-                setattr(p, k, v)
-            for attr in people_attributes:
-                if not hasattr(p, attr):
-                    if k is not 'company':
-                        setattr(p, attr, None)
-                    else:
-                        setattr(p, attr, {})
-            p_list.append(p)
-        return p_list
-
-    def get(self, user_id):
-        url = '{}/{}'.format(
-            _get_url(self.repo.url, self.base_path),
-            user_id
-        )
-        response = requests.get(
-            url,
-            auth=(
-                self.repo.username,
-                self.repo.password
-            )
-        )
-        entry = json.loads(response.content)['entry']
-        p = Model()
-        for k, v in entry.items():
-            setattr(p, k, v)
-        for attr in people_attributes:
-            if not hasattr(p, attr):
-                if k is not 'company':
-                    setattr(p, attr, None)
-                else:
-                    setattr(p, attr, {})
-        return p
-
-    def update(self, user_id, user_dict):
-        url = '{}/{}'.format(
-            _get_url(self.repo.url, self.base_path),
-            user_id
-        )
-        response = requests.put(
-            url,
-            auth=(
-                self.repo.username,
-                self.repo.password
-            ),
-            data=json.dumps(
-                user_dict
-            )
-        )
-        entry = json.loads(response.content)['entry']
-        p = Model()
-        for k, v in entry.items():
-            setattr(p, k, v)
-        for attr in people_attributes:
-            if not hasattr(p, attr):
-                if k is not 'company':
-                    setattr(p, attr, None)
-                else:
-                    setattr(p, attr, {})
-        return p
-
-
 class AlfRepo(object):
     """ API Client """
 
@@ -173,4 +32,147 @@ class AlfRepo(object):
         )
         self.username = username
         self.password = password
-        self.people = People(self)
+
+
+class ModelRequest(object):
+    
+    def __init__(self, repo):
+        self.repo = repo
+        self.url = '{}/{}'.format(
+            self.repo.url,
+            self.url_path
+        )
+        self.auth = (self.repo.username, self.repo.password)
+
+
+class ModelRequestGET(ModelRequest):
+
+    def get(self, pk):
+        url =  '{}/{}'.format(
+            self.url,
+            pk
+        )
+        print(url)
+        response = requests.get(
+            url,
+            auth=self.auth
+        )
+        return response
+
+class ModelRequestLIST(ModelRequest):
+
+    def get_all(self):
+        url = self.url
+        response = requests.get(
+            url,
+            auth=self.auth
+        )
+        return response
+
+    
+class ModelRequestPOST(ModelRequest):
+    
+    def post(self, data):
+        url = self.url
+        response = requests.post(
+            url,
+            auth=self.auth,
+            data=json.dumps(data)
+        )
+        return response
+
+
+class ModelRequestPUT(ModelRequest):
+
+    def put(self, pk, data):
+        url = '{}/{}'.format(
+            self.url,
+            pk
+        )
+        response = requests.put(
+            url,
+            auth=self.auth,
+            data=json.dumps(data)
+        )
+        return response
+
+
+class ModelRequestDELETE(ModelRequest):
+
+    def delete(self, pk):
+        url = '{}/{}'.format(
+            self.url,
+            pk
+        )
+        response = requests.delete(
+            url,
+            auth=self.auth
+        )
+        return response
+
+
+class PersonRequest(ModelRequestGET, ModelRequestLIST, ModelRequestPOST, ModelRequestPUT):
+    
+    url_path = 'people'
+
+
+class SiteRequest(ModelRequestGET, ModelRequestLIST, ModelRequestPOST, ModelRequestPUT, ModelRequestDELETE):
+
+    url_path = 'sites'
+
+
+class GroupRequest(ModelRequestGET, ModelRequestLIST, ModelRequestPOST, ModelRequestPUT, ModelRequestDELETE):
+
+    url_path = 'groups'
+
+
+class TagRequest(ModelRequestLIST, ModelRequestGET, ModelRequestPUT):
+
+    url_path = 'tags'
+
+
+class NodeRequest(ModelRequestGET, ModelRequestDELETE, ModelRequestPUT):
+
+    url_path = 'nodes'
+
+    def children(self, node_id):
+        url_path = '{}/children'.format(node_id)
+        url = '{}/{}'.format(self.url, url_path)
+        print(url)
+        response = requests.get(
+            url,
+            auth=self.auth
+        )
+        return response
+
+    def post(self, node_id, data):
+        url_path = '{}/children'.format(node_id)
+        url = '{}/{}'.format(self.url, url_path)
+        response = requests.post(
+            url,
+            auth=self.auth,
+            data=json.dumps(data)
+        )
+        return response
+
+
+class ActivitiesRequest(ModelRequestLIST):
+
+    url_path = 'people/{}/activities'
+
+    def __init__(self, repo):
+        self.repo = repo
+        self.url = '{}/{}'.format(
+            self.repo.url,
+            self.url_path
+        )
+        self.auth = (self.repo.username, self.repo.password)
+
+    def get_all(self, user_id):
+        url = self.url.format(user_id)
+        print(url)
+        response = requests.get(
+            url,
+            auth=self.auth
+        )
+        return response
