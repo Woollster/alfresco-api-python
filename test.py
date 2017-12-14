@@ -127,6 +127,14 @@ if __name__ == '__main__':
 
     print(node_request.put(test_folder_id, node_dict).content)
 
+
+    for child in children:
+        node_id = child['entry']['id']
+        print(node_request.content(node_id).content)
+        print(node_request.update_content(node_id, 'blah blah blah').content)
+
+    """
     for child in children:
         print(node_request.delete(child['entry']['id']))
+    """    
     

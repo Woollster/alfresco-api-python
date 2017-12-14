@@ -145,6 +145,27 @@ class NodeRequest(ModelRequestGET, ModelRequestDELETE, ModelRequestPUT):
         )
         return response
 
+    def content(self, node_id):
+        url_path = '{}/content'.format(node_id)
+        url = '{}/{}'.format(self.url, url_path)
+        print(url)
+        response = requests.get(
+            url,
+            auth=self.auth
+        )
+        return response
+
+    def update_content(self, node_id, content):
+        url_path = '{}/content'.format(node_id)
+        url = '{}/{}'.format(self.url, url_path)
+        print(url)
+        response = requests.put(
+            url,
+            auth=self.auth,
+            data=json.dumps({'contentBodyUpdate': content})
+        )
+        return response
+
     def post(self, node_id, data):
         url_path = '{}/children'.format(node_id)
         url = '{}/{}'.format(self.url, url_path)
