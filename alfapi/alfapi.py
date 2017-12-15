@@ -72,6 +72,18 @@ class ModelRequestInGET(ModelRequest):
         return response
 
 
+class ModelRequestParamsGET(ModelRequest):
+    def get(self, params):
+        url =  self.url
+        print(url)
+        response = requests.get(
+            url,
+            auth=self.auth,
+            params=params
+        )
+        return response
+
+
 class ModelRequestLIST(ModelRequest):
 
     def get_all(self):
@@ -272,3 +284,56 @@ class NodeTargets(ModelRequestInLIST, ModelRequestInPOST):
                 
     """
     url_path = 'nodes/{}/targets'
+
+
+class People(ModelRequestLIST, ModelRequestGET, ModelRequestPUT, ModelRequestPOST):
+    """ Users in an Alfresco repository."""
+    url_path = 'people'
+
+
+class PeopleAvatar(ModelRequestInGET, ModelRequestInPUT, ModelRequestInDELETE):
+    """ User avatars. """
+    url_path = 'people/{}/avatar'
+
+    def put(self, pk, data):
+        url = self.url.format(pk)
+        print(url)
+        response = requests.put(
+            url,
+            auth=self.auth,
+            data=data
+        )
+        return response
+
+
+class Groups(ModelRequestLIST, ModelRequestGET, ModelRequestPOST, ModelRequestDELETE, ModelRequestPUT):
+    """ Groups."""
+    url_path = 'groups'
+
+
+class GroupMembers(ModelRequestInLIST, ModelRequestInPOST):
+    """ Group memberships."""
+    url_path = 'groups/{}/members'
+
+
+class PeoplePreferences(ModelRequestInLIST, ModelRequestInGET):
+    """ People preferences.
+        Note: out of the box, there won't be any.
+    """
+    url_path = 'people/{}/preferences'
+
+
+class NodeQueries(ModelRequestParamsGET):
+    """ Node queries."""
+    url_path = 'queries/nodes'
+
+
+class PeopleQueries(ModelRequestParamsGET):
+    """ People queries."""
+    url_path = 'queries/people'
+
+
+class SiteQueries(ModelRequestParamsGET):
+    """ Site queries."""
+    url_path = 'queries/sites'
+

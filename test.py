@@ -1,13 +1,15 @@
 #!/usr/bin/env python
 """ Test module for alfapi."""
 
+import base64
 import json
 import requests
 
 from alfapi.alfapi import (
     AlfRepo, PeopleActivities, AuditApplications, AuditEntries, NodeChildren,
     NodeContent, Nodes, NodeCopy, NodeMove, NodeLock, NodeParents, NodeSources,
-    NodeUnlock, NodeTargets
+    NodeUnlock, NodeTargets, People, PeopleAvatar, PeoplePreferences, NodeQueries,
+    PeopleQueries, SiteQueries
 )
 
 
@@ -51,6 +53,7 @@ if __name__ == '__main__':
     """
 
     # NodeChildren
+    """
     node_children = NodeChildren(repo)
     test_folder_dict = {
         'name': 'TestFolder',
@@ -219,3 +222,70 @@ if __name__ == '__main__':
     print(nodes.delete(test_document_id).content)
     print(nodes.delete(moved_test_doc_id).content)
     print(nodes.delete(test_folder_id).content)
+    """
+
+
+    # People requests
+    """
+    people = People(repo)
+    print(people.get_all().content)
+
+    people_dict = {
+        'id': 'testuser1',
+        'firstName': 'Test',
+        'lastName': 'User1',
+        'email': 'testuser1@localhost',
+        'password': 'admin',
+    }
+    print(people.post(data=people_dict).content)
+
+    people_dict = {
+        'firstName': 'Bilbo',
+        'lastName': 'Baggins',
+    }
+
+    print(people.put('testuser1', data=people_dict).content)
+
+    print(people.get('testuser1').content)
+    """
+
+    # PeopleAvatar
+    """
+    people_avatar = PeopleAvatar(repo)
+
+    image_file = open('avatar.png', 'rb')
+
+    print(people_avatar.put('testuser1', data=image_file).content)
+
+    image_file.close()
+
+    print(people_avatar.get('testuser1').content)
+
+    print(people_avatar.delete('testuser1').content)
+    """
+
+    # Password resets - probably won't use
+    """
+    password_reset_request = PeopleRequestResetPassword(repo)
+    print(password_reset_request.post('testuser1', data={'client': 'share'}).content)
+    """   
+
+    # People preferences
+    """
+    people_preferences = PeoplePreferences(repo)
+    print(people_preferences.get_all('testuser1').content)
+    """
+
+    # Queries
+    """
+    people_query = PeopleQueries(repo)
+    print(people_query.get(params={'term': 'test'}).content)
+
+    site_queries = SiteQueries(repo)
+    print(site_queries.get(params={'term': 'test'}).content)
+
+    node_queries = NodeQueries(repo)
+    print(node_queries.get(params={'term': 'test'}).content)
+    """
+
+    
