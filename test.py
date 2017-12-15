@@ -1,10 +1,13 @@
 #!/usr/bin/env python
+""" Test module for alfapi."""
 
 import json
+import requests
 
 from alfapi.alfapi import (
-    AlfRepo, PersonRequest, SiteRequest, GroupRequest, ActivitiesRequest, TagRequest,
-    NodeRequest
+    AlfRepo, PeopleActivities, AuditApplications, AuditEntries, NodeChildren,
+    NodeContent, Nodes, NodeCopy, NodeMove, NodeLock, NodeParents, NodeSources,
+    NodeUnlock, NodeTargets
 )
 
 
@@ -12,129 +15,207 @@ HOSTNAME = 'http://localhost:8080'
 USERNAME = 'admin'
 PASSWORD = 'admin'
 
-
 if __name__ == '__main__':
     repo = AlfRepo(HOSTNAME, USERNAME, PASSWORD)
 
+    # PeopleActivities tests based on Activities
     """
-    person_request = PersonRequest(repo)
-    
-    print(person_request.get('admin'))
+    people_activities = PeopleActivities(repo)
+    print(people_activities.get('admin').content)
+    """
 
-    print(person_request.get_all())
+    # AuditApplications
+    """
+    audit_apps = AuditApplications(repo)
 
-    user_dict = {
-        'id': 'hseritt2',
-        'firstName': 'Harlin',
-        'email': 'hseritt@formtek.com',
-        'password': 'admin',
+    # testing get_all()
+    apps = json.loads(audit_apps.get_all().content)['list']['entries']
+
+    # testing get()
+    for app in apps:
+        app_id = app['entry']['id']
+        print(app_id)
+        print(audit_apps.get(app_id).content)
+        
+        # testing put()
+        audit_app_dict = {'isEnabled': 'false'}
+        print(audit_apps.put(app_id, audit_app_dict).content)
+
+        audit_app_dict = {'isEnabled': 'true'}
+        print(audit_apps.put(app_id, audit_app_dict).content)
+
+        # AuditEntries
+        # out of the box, there are none
+        audit_entries = AuditEntries(repo)
+        print(audit_entries.get_all(app_id).content)
+    """
+
+    # NodeChildren
+    node_children = NodeChildren(repo)
+    test_folder_dict = {
+        'name': 'TestFolder',
+        'nodeType': 'cm:folder',
+        'description': 'My test folder'
     }
-    
-    print(person_request.post(user_dict))
+    print(node_children.post('-root-', test_folder_dict).content)
 
-    user_dict = {
-        'email': 'harlin.seritt@gmail.com',
-    }
+    children = json.loads(node_children.get_all('-root-').content)['list']['entries']
 
-    print(person_request.put('hseritt2', user_dict))
-
-    print(person_request.delete('hseritt2'))
-    """
-
-    """
-    site_request = SiteRequest(repo)
-
-    print(site_request.get_all())
-
-    site_dict = {
-        'title': 'testsite2',
-        'visibility': 'PUBLIC',
-    }
-    print(site_request.post(site_dict).content)
-
-    site_dict = {
-        'title': 'testsite-extra',
-        'visibility': 'PRIVATE'
-    }
-    print(site_request.put('testsite2', site_dict).content)
-
-    print(site_request.delete('testsite1'))
-    print(site_request.delete('testsite2'))
-    """
-
-    """
-    group_request = GroupRequest(repo)
-
-    print(group_request.get_all().content)
-    print(group_request.get('GROUP_ALFRESCO_ADMINISTRATORS').content)
-
-    group_dict = {
-        'id': 'testgroup1'
-    }
-
-    print(group_request.post(data=group_dict).content)
-
-    group_dict = {
-        'displayName': 'Just another group',
-    }
-
-    print(group_request.put('GROUP_testgroup1', data=group_dict).content)
-
-    print(group_request.delete('GROUP_testgroup1'))
-    """
-
-    """
-    activities_request = ActivitiesRequest(repo)
-    print(activities_request.get_all('admin').content)
-    """
-
-    """
-    tags_request = TagRequest(repo)
-    print(tags_request.get_all().content)
-    print(tags_request.get('73530c67-613a-4b14-a788-839ad9ff9ed4').content)
-
-    tag_data = {
-        'tag': 'cert'
-    }
-
-    print(tags_request.put('73530c67-613a-4b14-a788-839ad9ff9ed4', data=tag_data).content)
-    """
-
-    node_request = NodeRequest(repo)
-
-    children = json.loads(
-        node_request.children('-root-').content
-    )['list']['entries']
-    
     for child in children:
-        if child['entry']['name'] == 'TestFolder':
-            test_folder_id = child['entry']['id']
+        node = child['entry']
+        # print(node['name'], node['id'])
+        if node['name'] == 'TestFolder':
+            test_folder_id = node['id']
 
-    print(node_request.get(test_folder_id).content)
+    print(test_folder_id)
 
-    node_dict = {
-        'name': input('Enter a document name with extension: '),
+    test_document_dict = {
+        'name': 'TestDocument.txt',
+        'description': 'A test document with text.',
         'nodeType': 'cm:content'
     }
 
-    print(node_request.post(test_folder_id, node_dict).content)
+    print(
+        json.loads(
+            node_children.post(test_folder_id, test_document_dict).content
+        )
+    )
 
-    children = (json.loads(node_request.children(test_folder_id).content)['list']['entries'])
+    children = json.loads(node_children.get_all(test_folder_id).content)['list']['entries']
 
-    node_dict = {
-        'title': 'This is my test document!'
+    for child in children:
+        node = child['entry']
+        # print(node['name'], node['id'])
+        if node['name'] == 'TestDocument.txt':
+            test_document_id = node['id']
+
+    with open('test_document.txt', 'r') as fh:
+        content = fh.read()
+
+    # print(content)
+    content_dict = {
+        'body': content,
+    }
+    node_content = NodeContent(repo)
+    print(node_content.put(test_document_id, data=content).content)
+
+    print(node_content.get(test_document_id).content)
+
+    nodes = Nodes(repo)
+    print(nodes.get(test_document_id).content)
+
+    updated_test_doc_dict = {
+        'name': 'UpdatedTestDocument.txt',
+        'title': 'Updated Test Document',
+        'description': 'This is an updated test document'
     }
 
-    print(node_request.put(test_folder_id, node_dict).content)
+    print(nodes.put(test_document_id, updated_test_doc_dict).content)
 
+    new_folder_dict = {
+        'name': 'NewFolder',
+        'description': 'For testing copies and moves.',
+        'nodeType': 'cm:folder'
+    }
+
+    print(node_children.post(test_folder_id, new_folder_dict).content)
+
+    children = json.loads(node_children.get_all(test_folder_id).content)['list']['entries']
 
     for child in children:
-        node_id = child['entry']['id']
-        print(node_request.content(node_id).content)
-        print(node_request.update_content(node_id, 'blah blah blah').content)
+        node = child['entry']
+        # print(node['name'], node['id'])
+        if node['name'] == 'NewFolder':
+            new_folder_id = node['id']
 
-    """
-    for child in children:
-        print(node_request.delete(child['entry']['id']))
-    """    
+    # print(new_folder_id)
+
+    node_copy = NodeCopy(repo)
+    target_dict = {
+        'targetParentId': new_folder_id,
+    }
+    print(node_copy.post(test_document_id, target_dict).content)
     
+    moved_folder_dict = {
+        'name': 'MovesFolder',
+        'nodeType': 'cm:folder',
+        'description': 'My folder for testing moves'
+    }
+    print(node_children.post(test_folder_id, moved_folder_dict).content)
+
+    children = json.loads(node_children.get_all(test_folder_id).content)['list']['entries']
+
+    for child in children:
+        node = child['entry']
+        print(node['name'], node['id'])
+        if node['name'] == 'MovesFolder':
+            moved_folder_id = node['id']
+
+    # print(moved_folder_id)
+    node_move = NodeMove(repo)
+    target_dict = {
+        'targetParentId': moved_folder_id
+    }
+    print(node_move.post(test_document_id, target_dict).content)
+
+    children = json.loads(node_children.get_all(moved_folder_id).content)['list']['entries']
+
+    print("THESE...")
+    for child in children:
+        node = child['entry']
+        print(node['name'], node['id'])
+        if node['name'] == 'TestDocument.txt':
+            moved_test_doc_id = node['id']
+
+    # print(moved_test_doc_id)
+    
+    test_document_dict = {
+        'name': 'NewTestDocument.txt',
+        'description': 'A test document with text.',
+        'nodeType': 'cm:content'
+    }
+
+    print(
+        json.loads(
+            node_children.post(test_folder_id, test_document_dict).content
+        )
+    )
+
+    children = json.loads(node_children.get_all(test_folder_id).content)['list']['entries']
+
+    for child in children:
+        node = child['entry']
+        # print(node['name'], node['id'])
+        if node['name'] == 'NewTestDocument.txt':
+            test_document_id = node['id']
+
+    node_lock = NodeLock(repo)
+    node_lock_dict = {
+        'timeToExpire': 30,
+        'type': 'ALLOW_OWNER_CHANGES',
+        'lifetime': 'PERSISTENT'
+    }
+    print(node_lock.post(test_document_id, data=node_lock_dict).content)
+
+    node_unlock = NodeUnlock(repo)
+    print(node_unlock.post(test_document_id).content)
+
+    node_parents = NodeParents(repo)
+    print(node_parents.get_all(test_document_id).content)
+
+    node_sources = NodeSources(repo)
+    print(node_sources.get_all(test_document_id).content)
+
+    node_targets = NodeTargets(repo)
+    print(node_targets.get_all(test_document_id).content)
+
+    targeted_dict = {
+        'targetId': moved_test_doc_id,
+        'assocType': 'MyAssociationType'
+    }
+
+    print(node_targets.post(test_document_id, data=targeted_dict).content)
+
+    print(nodes.delete(test_document_id).content)
+    print(nodes.delete(moved_test_doc_id).content)
+    print(nodes.delete(test_folder_id).content)

@@ -35,6 +35,8 @@ class AlfRepo(object):
 
 
 class ModelRequest(object):
+
+    url_path = None
     
     def __init__(self, repo):
         self.repo = repo
@@ -59,10 +61,34 @@ class ModelRequestGET(ModelRequest):
         )
         return response
 
+
+class ModelRequestInGET(ModelRequest):
+    def get(self, pk):
+        url =  self.url.format(pk)
+        response = requests.get(
+            url,
+            auth=self.auth
+        )
+        return response
+
+
 class ModelRequestLIST(ModelRequest):
 
     def get_all(self):
         url = self.url
+        print(url)
+        response = requests.get(
+            url,
+            auth=self.auth
+        )
+        return response
+
+
+class ModelRequestInLIST(ModelRequest):
+
+    def get_all(self, pk):
+        url = self.url.format(pk)
+        print(url)
         response = requests.get(
             url,
             auth=self.auth
@@ -74,6 +100,19 @@ class ModelRequestPOST(ModelRequest):
     
     def post(self, data):
         url = self.url
+        response = requests.post(
+            url,
+            auth=self.auth,
+            data=json.dumps(data)
+        )
+        return response
+
+
+class ModelRequestInPOST(ModelRequest):
+    
+    def post(self, pk, data=None):
+        url = self.url.format(pk)
+        print(url)
         response = requests.post(
             url,
             auth=self.auth,
@@ -97,79 +136,11 @@ class ModelRequestPUT(ModelRequest):
         return response
 
 
-class ModelRequestDELETE(ModelRequest):
+class ModelRequestInPUT(ModelRequest):
 
-    def delete(self, pk):
-        url = '{}/{}'.format(
-            self.url,
-            pk
-        )
-        response = requests.delete(
-            url,
-            auth=self.auth
-        )
-        return response
-
-
-class PersonRequest(ModelRequestGET, ModelRequestLIST, ModelRequestPOST, ModelRequestPUT):
-    
-    url_path = 'people'
-
-
-class SiteRequest(ModelRequestGET, ModelRequestLIST, ModelRequestPOST, ModelRequestPUT, ModelRequestDELETE):
-
-    url_path = 'sites'
-
-
-class GroupRequest(ModelRequestGET, ModelRequestLIST, ModelRequestPOST, ModelRequestPUT, ModelRequestDELETE):
-
-    url_path = 'groups'
-
-
-class TagRequest(ModelRequestLIST, ModelRequestGET, ModelRequestPUT):
-
-    url_path = 'tags'
-
-
-class NodeRequest(ModelRequestGET, ModelRequestDELETE, ModelRequestPUT):
-
-    url_path = 'nodes'
-
-    def children(self, node_id):
-        url_path = '{}/children'.format(node_id)
-        url = '{}/{}'.format(self.url, url_path)
-        print(url)
-        response = requests.get(
-            url,
-            auth=self.auth
-        )
-        return response
-
-    def content(self, node_id):
-        url_path = '{}/content'.format(node_id)
-        url = '{}/{}'.format(self.url, url_path)
-        print(url)
-        response = requests.get(
-            url,
-            auth=self.auth
-        )
-        return response
-
-    def update_content(self, node_id, content):
-        url_path = '{}/content'.format(node_id)
-        url = '{}/{}'.format(self.url, url_path)
-        print(url)
+    def put(self, pk, data):
+        url = self.url.format(pk)
         response = requests.put(
-            url,
-            auth=self.auth,
-            data=json.dumps({'contentBodyUpdate': content})
-        )
-        return response
-
-    def post(self, node_id, data):
-        url_path = '{}/children'.format(node_id)
-        url = '{}/{}'.format(self.url, url_path)
-        response = requests.post(
             url,
             auth=self.auth,
             data=json.dumps(data)
@@ -177,23 +148,127 @@ class NodeRequest(ModelRequestGET, ModelRequestDELETE, ModelRequestPUT):
         return response
 
 
-class ActivitiesRequest(ModelRequestLIST):
+class ModelRequestDELETE(ModelRequest):
 
-    url_path = 'people/{}/activities'
-
-    def __init__(self, repo):
-        self.repo = repo
-        self.url = '{}/{}'.format(
-            self.repo.url,
-            self.url_path
+    def delete(self, pk):
+        url = '{}/{}'.format(
+            self.url,
+            pk
         )
-        self.auth = (self.repo.username, self.repo.password)
-
-    def get_all(self, user_id):
-        url = self.url.format(user_id)
         print(url)
-        response = requests.get(
+        response = requests.delete(
             url,
             auth=self.auth
         )
         return response
+
+
+class ModelRequestInDELETE(ModelRequest):
+
+    def delete(self, pk):
+        url = self.url.format(pk)
+        response = requests.delete(
+            url,
+            auth=self.auth
+        )
+        return response
+
+
+class PeopleActivities(ModelRequestInGET):
+    """ User activities
+    """
+    url_path = 'people/{}/activities'
+    
+
+class AuditApplications(ModelRequestLIST, ModelRequestGET, ModelRequestPUT):
+    """ Audit applications 
+    * Supported only for 5.2.2 +
+    """
+    url_path = 'audit-applications'
+
+
+class AuditEntries(ModelRequestInLIST, ModelRequestInDELETE):
+    """ Audit entries for audit applications.
+        ModelRequestInDELETE/.delete() is not tested.
+        
+        The following are not covered:
+
+        DELETE /audit-applications/{auditApplicationId}/audit-entries/{auditEntryId}
+            Permanently delete an audit entry
+        GET /audit-applications/{auditApplicationId}/audit-entries/{auditEntryId} 
+            Get audit entry
+        GET /nodes/{nodeId}/audit-entries List audit entries for a node
+    """
+    url_path = 'audit-applications/{}/audit-entries'
+
+
+class NodeChildren(ModelRequestInPOST, ModelRequestInLIST):
+    """ Nodes are most any object in Alfresco."""
+    url_path = 'nodes/{}/children'
+
+
+class NodeContent(ModelRequestInPUT, ModelRequestInGET):
+    """ Document content."""
+    url_path = 'nodes/{}/content'
+
+class Nodes(ModelRequestGET, ModelRequestPUT, ModelRequestDELETE):
+    """ Node object."""
+    url_path = 'nodes'
+
+
+class NodeCopy(ModelRequestInPOST):
+    """ Node copy request."""
+    url_path = 'nodes/{}/copy'
+
+
+class NodeMove(ModelRequestInPOST):
+    """ Node move request."""
+    url_path = 'nodes/{}/move'
+
+
+class NodeLock(ModelRequestInPOST):
+    """ Node lock request."""
+    url_path = 'nodes/{}/lock'
+
+
+class NodeUnlock(ModelRequestInPOST):
+    """ Node unlock request."""
+    url_path = 'nodes/{}/unlock'
+
+
+class NodeParents(ModelRequestInLIST):
+    """ Top folder for node."""
+    url_path = 'nodes/{}/parents'
+
+
+class NodeSources(ModelRequestInLIST):
+    """ Node sources.
+        Note: out of the box, there will be none.
+    """
+    url_path = 'nodes/{}/sources'
+
+
+class NodeTargets(ModelRequestInLIST, ModelRequestInPOST):
+    """ Node target associations.
+        Note: out of the box, there will be none.
+
+        The following are not covered:
+
+        DELETE /nodes/{nodeId}/targets/{targetId} Delete node association(s)
+
+        Shaky: Creating a target association. Need to figure out this kind of error:
+
+        b'{
+            "error":
+                {
+                    "errorKey":"Unknown assocType: MyAssociationType",
+                    "statusCode":400,
+                    "briefSummary":"11150195 Unknown assocType: MyAssociationType",
+                    "stackTrace":
+                        "For security reasons the stack trace is no longer displayed, but the property is kept for previous versions",
+                    "descriptionURL":"https://api-explorer.alfresco.com"
+                }
+            }'
+                
+    """
+    url_path = 'nodes/{}/targets'
